@@ -2,11 +2,11 @@ name: 每日自动抓取节点
 
 on:
   schedule:
-    - cron: "0 22 * * *" # 每天北京时间早上 6 点准时开炉
-  workflow_dispatch: # 允许你随时手动点击运行
+    - cron: "0 22 * * *"
+  workflow_dispatch:
 
 permissions:
-  contents: write # 赋予流水线写代码的权限
+  contents: write
 
 jobs:
   build:
@@ -20,7 +20,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: 运行爬虫抓取
+      # 👇 史诗级升级：安装真实浏览器内核 Playwright
+      - name: 安装 Playwright 及浏览器
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install chromium
+
+      - name: 运行高级爬虫抓取
         run: python spider.py
 
       - name: 打包生成订阅链接并推送
@@ -30,7 +37,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # 👇 防撞气囊：先检查有没有抓到东西，文件大于 0 字节才上传
           if [ -s sub.txt ]; then
             git add sub.txt
             git commit -m "自动更新节点" || echo "今日节点无变化"
