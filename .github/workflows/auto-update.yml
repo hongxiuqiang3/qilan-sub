@@ -24,9 +24,17 @@ jobs:
         run: python spider.py
 
       - name: 打包生成订阅链接并推送
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add sub.txt
-          git commit -m "自动更新节点" || echo "今日节点无变化"
-          git push
+          
+          # 👇 防撞气囊：先检查有没有抓到东西，文件大于 0 字节才上传
+          if [ -s sub.txt ]; then
+            git add sub.txt
+            git commit -m "自动更新节点" || echo "今日节点无变化"
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          else
+            echo "⚠️ 今天没抓到节点，不执行推送，任务和平结束。"
+          fi
